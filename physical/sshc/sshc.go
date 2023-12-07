@@ -17,12 +17,11 @@ func New(private string, user string, host string) *ssh.Client {
 			fmt.Println("-private not set, cannot use password when STDIN is a pipe")
 			os.Exit(1)
 		}
-	} else {
-		auth, err = publicKey(private)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+	}
+	auth, err := publicKey(private)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	u := user
