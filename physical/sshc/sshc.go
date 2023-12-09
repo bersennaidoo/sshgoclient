@@ -1,11 +1,13 @@
 package sshc
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func New(private string, user string, host string) *ssh.Client {
@@ -17,11 +19,19 @@ func New(private string, user string, host string) *ssh.Client {
 			fmt.Println("-private not set, cannot use password when STDIN is a pipe")
 			os.Exit(1)
 		}
-	}
-	auth, err := publicKey(private)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		auth1, err := passwordFromTerm()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		auth = auth1
+	} else {
+		auth2, err := publicKey(private)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		auth = auth2
 	}
 
 	u := user
@@ -40,6 +50,19 @@ func New(private string, user string, host string) *ssh.Client {
 	}
 
 	return client
+}
+
+func passwordFromTerm() (ssh.AuthMethod, error) {
+	fmt.Printf("SSH Passsword: ")
+	p, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("") // Show the return
+	if len(bytes.TrimSpace(p)) == 0 {
+		return nil, fmt.Errorf("password was an empty string")
+	}
+	return ssh.Password(string(p)), nil
 }
 
 func publicKey(privateKeyFile string) (ssh.AuthMethod, error) {

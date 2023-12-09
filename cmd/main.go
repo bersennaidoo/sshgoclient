@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 
@@ -34,9 +33,15 @@ func main() {
 		}
 	}
 
-	client := sshc.New(*private, "test", nargs[0])
+	client := sshc.New(*private, "root", nargs[0])
 
 	dops := devops.New(client)
-	log.Printf("%#q\n", dops)
+	defer dops.ClientSSH.Close()
 
+	_ = dops.SudoAptInstall("tree")
+	//ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	//defer cancel()
+
+	//out, _ := dops.CombinedOutput(ctx, "date")
+	//fmt.Printf("The Date is: %s\n", out)
 }
